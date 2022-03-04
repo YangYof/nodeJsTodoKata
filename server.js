@@ -1,28 +1,18 @@
 const http = require('http')
 const { v4: uuidv4 } = require('uuid')
-const errorHandle = require('./errorhandle.js')
+const {errorHandle, successHandle} = require('./responsehandle.js')
+const { REQUESTMETHODS } = require('./httpmothods.js')
 const todos = []
 
 const requestListener = (req, res) => {
-    const headers = {
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, Content-Length, X-Requested-With',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'PATCH, POST, GET,OPTIONS,DELETE',
-        'Content-Type': 'application/json'
-    }
     let body=''
     req.on('data', (chunk)=>{
         body += chunk
     })
     
-    if(req.url === '/todos' && req.method === 'GET'){
-        res.writeHead(200, headers)
-        res.write(JSON.stringify({
-            "success":"true",
-            "data":todos
-        }))
-        res.end()
-    }else if(req.url === '/todos' && req.method === 'POST'){
+    if(req.url === '/todos' && req.method === REQUESTMETHODS.get){
+        successHandle(res, todos)
+    }else if(req.url === '/todos' && req.method === REQUESTMETHODS.post){
         req.on('end', ()=>{
             try{
                 const title = JSON.parse(body).title
@@ -32,12 +22,7 @@ const requestListener = (req, res) => {
                         "id":uuidv4()
                     }
                     todos.push(todo)
-                    res.writeHead(200, headers)
-                    res.write(JSON.stringify({
-                        "success":"true",
-                        "data":todos
-                    }))
-                    res.end()
+                    successHandle(res, todos)
                 }else{
                     errorHandle(res, 400, '缺少 title 欄位')
                 }
@@ -45,29 +30,19 @@ const requestListener = (req, res) => {
                 errorHandle(res, 400, '請確認格式')
             }
         })
-    }else if(req.url === '/todos' && req.method === 'DELETE'){
+    }else if(req.url === '/todos' && req.method === REQUESTMETHODS.delete){
         todos.length = 0;
-        res.writeHead(200, headers)
-        res.write(JSON.stringify({
-            "success":"true",
-            "data":todos
-        }))
-        res.end()
-    }else if(req.url.startsWith('/todos/') && req.method === 'DELETE'){
+        successHandle(res, todos)
+    }else if(req.url.startsWith('/todos/') && req.method === REQUESTMETHODS.delete){
         const id = req.url.split('/').pop()
         const index = todos.findIndex(el=> el.id == id)
         if(index!==-1){
             todos.splice(index, 1)
-            res.writeHead(200, headers)
-            res.write(JSON.stringify({
-                "success":"true",
-                "data":todos
-            }))
-            res.end()
+            successHandle(res, todos)
         }else{
             errorHandle(res, 400, '請確認todo id')
         }
-    }else if(req.url.startsWith('/todos/') && req.method === 'PATCH'){
+    }else if(req.url.startsWith('/todos/') && req.method === REQUESTMETHODS.patch){
         req.on('end', ()=>{
             try{
                 const id = req.url.split('/').pop()
@@ -75,11 +50,7 @@ const requestListener = (req, res) => {
                 const title = JSON.parse(body).title
                 if(index!==-1&&title!==undefined){
                     todos[index].title = title
-                    res.writeHead(200, headers)
-                    res.write(JSON.stringify({
-                        "success":"true",
-                        "data":todos
-                    }))
+                    successHandle(res, todos)
                     res.end()
                 }else{
                     errorHandle(res, 400, '請確認todo id')
