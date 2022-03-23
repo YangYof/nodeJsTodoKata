@@ -12,6 +12,15 @@ const REQUESTMETHODS = {
     "patch":"PATCH",
 }
 
+const errorMessage = {
+    "404":"GET",
+    "4001":"POST",
+    "delete":"DELETE",
+    "patch":"PATCH",
+}
+
+
+
 module.exports = {
     headers, REQUESTMETHODS
 }
